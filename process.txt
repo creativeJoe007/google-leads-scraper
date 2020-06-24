@@ -1,0 +1,12 @@
+Work Flow:
+
+
+* Search "chef a domicle" on google
+* Extract all urls in the page
+* Verify if they have the word "translate" or "english", "translation", or "Thesaurus"
+* Skip if they do, because it is a dictionary website we don't need
+* Open all links that passed Step 3 test
+* Scan through the pages for email and/or number
+* If we find, we extract it, attach the site's name and URL then save
+* After a page is completed we click on the next button
+* And start again from Step 2
