@@ -11,7 +11,7 @@ To start you would need to activate the local environment
    source env/bin/activate
  ## For Windows (not supported):
    Windows is not supported for now
-   
+##
 1. Then you install the requirements in "requirements.txt"
 2. run: python3 main.py "(query)" (start page) (stop page)
  
