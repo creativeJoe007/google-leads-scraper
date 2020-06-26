@@ -52,15 +52,23 @@ import re
 
 
 source_code = """
-Call 0661543485dede dewde
+Call Tel Call 0661543485dede dewde
 """
 # phone_regex = "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]" # Priority 1
-phone_regex = "((tel|p|t|phone|call|dial|ring)[: -]?[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9])" # Priority 2
+phone_regex = "((tel|p|t|phone|call|dial|ring|c|l|line)[: -]?[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9])" # Priority 2
 # phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]" # Priority 3
 # email_regex = "[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*"
 is_found = re.findall(phone_regex, source_code, re.IGNORECASE)
 print(is_found)
 
+number= "1-888-283-1678"
+reg =  r"[\-\(\)\+ .]"
+total_count = len(re.sub(reg, "", number))
+if total_count > 9 and total_count < 14:
+  print("\nYooo")
+else:
+ print(re.sub(reg, "", number))
+ print(total_count)
 # for number in potential_phone_numbers:
 #  # phone_regex = "^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$"
 #  phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"

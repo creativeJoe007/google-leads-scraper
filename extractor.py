@@ -11,25 +11,26 @@ class Extractor():
  # We take our screenshots here, get titles, find social media pages
  #  Of users we extract
  #------------------------------------------------------------------------
- def __init__(self, driver):
+ def __init__(self, driver, query, start_page, stop_page):
   self._driver = driver
   self._data_extract = []
-  self._page = 0 # start counting from zero due to google's seek algorithm
+  self._page = start_page # start counting from zero due to google's seek algorithm
+  self._stop_page = stop_page # start counting from zero due to google's seek algorithm
 
   # We loop through the enter data wrapped under pagination
-  self.paginate_page()
+  self.paginate_page(query)
 
- def paginate_page(self):
+ def paginate_page(self, query):
     #------------------------------------------------------------------------
     # We are going to fetch all first 10 pages
     # Of google's result
     #------------------------------------------------------------------------
-    start_url = "https://www.google.com/search?q=chef+a+domicile&oq=&aqs=chrome.0.35i39l8.13736357j0j1&sourceid=chrome&ie=UTF-8"
+    start_url = f"https://www.google.com/search?q={query}&oq=&aqs=chrome.0.35i39l8.13736357j0j1&sourceid=chrome&ie=UTF-8"
     seek_number = 0
     seek_url_query = f"&start={seek_number}"
 
     # while self._page <= 9:
-    while self._page <= 1:
+    while self._page <= self._stop_page:
       self._driver.get(start_url + f"&start={(self._page * 10)}")
       self.extract_page_content()
       self._page += 1
@@ -147,7 +148,8 @@ class Extractor():
     print(f"found_numbers {found_numbers}")
     
     if len(verified_numbers) or len(found_emails):
-      print(screen_shot_name)
+      # Increase the size of the page for our screenshot
+      self._driver.set_window_size(1920, 8000)
       self.screengrab(screen_shot_name);
       _content['screen_shot'] = screen_shot_name;
 
@@ -167,10 +169,13 @@ class Extractor():
     ]
 
     for regex in phone_regex:
-      print(regex)
       is_found = re.findall(regex, source, re.IGNORECASE)
       if len(is_found) > 0:
-        found_numbers = is_found
+        if type(is_found[0]) is tuple:
+          # Our second regex returns a tuple instead of a string like the other one
+          # I haven't figured how to resolve that but this is just a work around
+          found_numbers = [is_found[0][0]]
+        else: found_numbers = is_found
         break;
     
     return found_numbers
@@ -196,13 +201,14 @@ class Extractor():
 
  def extract_mobile_number(self, found_numbers):
     number_list = []
-    final_phone_regex = "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
+    final_phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
+    reg =  r"[\-\(\)\+ .]"
     for number in found_numbers:
       print(f'number {number}')
       number = re.search(final_phone_regex, number, re.IGNORECASE)
       if number:
         number = number.group(0)
-        total_count = len(number.replace("[-\(\)\+\. ]+", ""))
+        total_count = len(re.sub(reg, "", number))
         if total_count > 9 and total_count < 14:
           if(number not in number_list): number_list.append(number)
     
