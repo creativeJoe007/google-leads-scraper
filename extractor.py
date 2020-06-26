@@ -33,12 +33,14 @@ class Extractor():
     while self._page <= self._stop_page:
       self._driver.get(start_url + f"&start={(self._page * 10)}")
       self.extract_page_content()
-      self._page += 1
 
       # Save extracted files into JSOn format after ever page is processed
-      with open('extracts.json', 'w') as outfile:
+      with open('extracted/' + str(self._page) + '.json', 'w') as outfile:
         json.dump(self._data_extract, outfile)
         outfile.close()
+
+      self._page += 1
+      self._data_extract = []
 
  def words_in_string(self, word_list, a_string):
     return set(word_list).intersection(a_string.lower().split())
@@ -131,7 +133,6 @@ class Extractor():
     extracted_emails = ""
 
     # Now we use regex to match all occurrences of email or phone numbers in the page source
-    # print(html_source)
     try:
       # _content['title'] = self._driver.find_element_by_tag_name('title').text
       _content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
@@ -204,7 +205,6 @@ class Extractor():
     final_phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
     reg =  r"[\-\(\)\+ .]"
     for number in found_numbers:
-      print(f'number {number}')
       number = re.search(final_phone_regex, number, re.IGNORECASE)
       if number:
         number = number.group(0)
