@@ -53,40 +53,41 @@ class Extractor():
     # Any item that passes this page would be considered for scrapping
     #------------------------------------------------------------------------
     dictionary_words = ["english", "translate", "translation", "dictionary", "Thesaurus", "translations"]
-    _site_content = {
-      'title': '',
-      'url': '',
-      'description': '',
-      'site_description': '',
-      'screen_shot': '',
-      'contact_email': '',
-      'contact_number': ''
-    }
     response = self._driver.find_elements_by_css_selector("div.g")
 
     # Now we look through all search results
     for result in response:
+      self._site_content = {
+        'title': '',
+        'url': '',
+        'description': '',
+        'site_description': '',
+        'screen_shot': '',
+        'contact_email': '',
+        'contact_number': ''
+      }
+
       google_result = result.find_element_by_css_selector("div.rc")
 
-      _site_content['title'] = google_result.find_element_by_css_selector("div.r")\
+      self._site_content['title'] = google_result.find_element_by_css_selector("div.r")\
         .find_element_by_css_selector("h3.LC20lb.DKV0Md").text
 
-      _site_content['description'] = google_result.find_element_by_css_selector("div.s")\
+      self._site_content['description'] = google_result.find_element_by_css_selector("div.s")\
         .find_element_by_css_selector("span.st").text
 
-      _site_content['url'] = google_result.find_element_by_css_selector("div.r")\
+      self._site_content['url'] = google_result.find_element_by_css_selector("div.r")\
         .find_element_by_tag_name("a").get_attribute("href")
 
-      if(not self.words_in_string(dictionary_words, _site_content['title']) and \
-        not self.words_in_string(dictionary_words, _site_content['description'])):
+      if(not self.words_in_string(dictionary_words, self._site_content['title']) and \
+        not self.words_in_string(dictionary_words, self._site_content['description'])):
           #------------------------------------------------------------------------
           # This website is not a dictionary, now we can start 
           # scanning through to extract just
           # The data we need
           #------------------------------------------------------------------------
-          if "youtube" in _site_content['url']:
+          if "youtube" in self._site_content['url']:
             continue;
-          elif "facebook" in _site_content['url']:
+          elif "facebook" in self._site_content['url']:
             #------------------------------------------------------------------------
             # First we split by "/"
             # We check if the last "/" is empty in case the URL ended with "/"
@@ -94,7 +95,7 @@ class Extractor():
             # If its not empty we check if the value contains "?" meaning a query
             # If it does, we still use second to last
             #------------------------------------------------------------------------
-            split_page_url_list = _site_content['url'].split("/")
+            split_page_url_list = self._site_content['url'].split("/")
             page_name = ""
 
             if split_page_url_list[len(split_page_url_list) - 1] == "":
@@ -105,16 +106,11 @@ class Extractor():
               else:
                 page_name = split_page_url_list[len(split_page_url_list) - 1]
             
-            _site_content['url'] = f"https://web.facebook.com/pg/{page_name}/about/";
+            self._site_content['url'] = f"https://web.facebook.com/pg/{page_name}/about/";
 
-          print("\n")
-          print(_site_content['url'])
-          self.extract_info_from_link(_site_content)
+          self.extract_info_from_link()
 
-      # print("\n")
-      # print(_site_content['title'])
-
- def extract_info_from_link(self, _content):
+ def extract_info_from_link(self):
     #------------------------------------------------------------------------
     # We will access all the different websites, and
     # extract every email address, and phone number
@@ -125,7 +121,7 @@ class Extractor():
     self._driver.execute_script("window.open('');")
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
-    self._driver.get(_content['url'])
+    self._driver.get(self._site_content['url'])
     time.sleep(5)
     
     html_source = self._driver.find_element_by_tag_name('body').get_attribute('innerHTML')
@@ -135,27 +131,28 @@ class Extractor():
     # Now we use regex to match all occurrences of email or phone numbers in the page source
     try:
       # _content['title'] = self._driver.find_element_by_tag_name('title').text
-      _content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
+      self._site_content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
         .get_attribute("content")
     except NoSuchElementException as e:
       print("There is an issue with the social media pages")
 
-    screen_shot_name = 'static/' + _content["title"].replace("[,\.!\*- ]", "_") + '.png'
+    screen_shot_name = 'static/' + self._site_content["title"].replace("[,\.!\*- ]", "_") + '.png'
 
     found_numbers = self.scan_for_numbers(html_source)
     found_emails = self.scan_for_emails(html_source)
     verified_numbers = self.extract_mobile_number(found_numbers)
-    print(f"verified_numbers {verified_numbers}")
-    print(f"found_numbers {found_numbers}")
+
+    self._site_content['contact_number'] = verified_numbers
+    self._site_content['contact_email'] = found_emails
     
     if len(verified_numbers) or len(found_emails):
       # Increase the size of the page for our screenshot
       self._driver.set_window_size(1920, 8000)
       self.screengrab(screen_shot_name);
-      _content['screen_shot'] = screen_shot_name;
+      self._site_content['screen_shot'] = screen_shot_name;
 
       # We are done with processing now lets add to our list
-      self._data_extract.append(_content)
+      self._data_extract.append(self._site_content)
 
     # Close new tab first
     self._driver.close()
