@@ -1,7 +1,7 @@
 import json
 import re
 import time
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException,TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 
@@ -32,7 +32,10 @@ class Extractor():
     # while self._page <= 9:
     while self._page <= self._stop_page:
       self._driver.get(start_url + f"&start={(self._page * 10)}")
-      self.extract_page_content()
+      try:
+        self.extract_page_content()
+      except TimeoutException as e:
+        print("Timeout error, check your internet")
 
       # Save extracted files into JSOn format after ever page is processed
       with open('extracted/' + str(self._page) + '.json', 'w') as outfile:
@@ -108,7 +111,15 @@ class Extractor():
             
             self._site_content['url'] = f"https://web.facebook.com/pg/{page_name}/about/";
 
-          self.extract_info_from_link()
+          try:
+            self.extract_info_from_link()
+          except NoSuchElementException as e:
+            # Had cases where body element was empty, meaning the website didn't exist
+            # So since a new window was launched before that error,
+            # We have to close the window and switch back to the search result
+            self._driver.close()
+            self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
+            print("This website has an issue and could not be parsed")
 
  def extract_info_from_link(self):
     #------------------------------------------------------------------------
@@ -130,7 +141,7 @@ class Extractor():
 
     # Now we use regex to match all occurrences of email or phone numbers in the page source
     try:
-      # _content['title'] = self._driver.find_element_by_tag_name('title').text
+      # _content['inner_title'] = self._driver.find_element_by_tag_name('title').text
       self._site_content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
         .get_attribute("content")
     except NoSuchElementException as e:
