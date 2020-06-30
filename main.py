@@ -1,55 +1,54 @@
-import sys
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+import argparse
+from browser import determine_browser
 from extractor import Extractor
-from selenium.webdriver.chrome.options import Options
 import time
+from selenium import webdriver
+from println import println
 
 driver = None;
-arguments = sys.argv
+arguments = argparse.ArgumentParser()
 
-print("\n")
+arguments.add_argument('query', action='store', type=str)
+arguments.add_argument('--start', action='store', type=int, required=False, default=0, help="What page would you like to us\
+   to start scrape from Google's search result")
+arguments.add_argument('--stop', action='store', type=int, required=False, default=14, help="At what page would you want to stop\
+   scraping Google's search result")
+arguments.add_argument('--browser', action='store', type=str, required=False, default="chrome", help="What browser should we\
+   scrape with?")
+arguments.add_argument('--driver', action='store', type=str, required=False, help="Browser executable path")
+
+args = arguments.parse_args()
+
 def main():
-  chrome_options = Options();
-  chrome_options.add_argument('--headless');
-  chrome_options.add_argument('--start-maximized');
-  chrome_options.add_argument("enable-automation");
-  chrome_options.add_argument("--disable-extensions");
-  chrome_options.add_argument("--dns-prefetch-disable");
-  chrome_options.add_argument("--no-sandbox");
-  chrome_options.add_argument("--disable-dev-shm-usage");
-  chrome_options.add_argument("--disable-gpu");
-  chrome_options.add_argument("--force-device-scale-factor=1");
-
   executor_url = ""
   session_id = ""
-  query = arguments[1]
-  start_page = int(arguments[2]) if len(arguments) > 2 and type(arguments[2]) is int else 0
-  stop_page = int(arguments[3]) if len(arguments) > 3 and type(arguments[3]) is int else 14
+  selected_browser = args.browser
+  browser_driver_path = args.driver
+  query = args.query
+  start_page = args.start - 1
+  stop_page = args.stop - 1
 
   if start_page < 0: start_page = 0 # If the user puts in 0, we auto make it one
   elif (stop_page - start_page) > 15:
-    print("You cannot search more than 15 pages at a time")
+    println("You cannot search more than 15 pages at a time")
   # elif (stop_page - start_page) > 15:
   #  print("You cannot be search more than 15 pages at a time")
 
- # Determine If we reuse chrome instance or create a new one
-  if (executor_url):
-    driver = webdriver.Remote(command_executor=executor_url, desired_capabilities={})
-    driver.session_id = session_id
+ # Determine what browser to use for this tool
+  driver = determine_browser(selected_browser, browser_driver_path);
+  if type(driver) == str:
+    println(driver);
   else:
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options);
     executor_url = driver.command_executor._url
     session_id = driver.session_id
 
     # Maximize chrome height to highest
     driver.set_window_size(1920, 8000)
 
-    # driver.get(start_url)
-    print(f"\nGoogle's Query: {query}")
+    println(f"Google's Query: {query}", "normal")
     extractor = Extractor(driver, query, start_page, stop_page)
+    println("Congratulations, scraping complete", "normal")
     driver.close();
 
-if len(arguments) < 2: print("You didn't enter your search query")
-else: main()
-print("\n")
+# if len(arguments) < 2: println("You didn't enter your search query")
+main()
