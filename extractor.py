@@ -1,9 +1,12 @@
 import json
 import re
 import time
-from selenium.common.exceptions import NoSuchElementException,TimeoutException
+from selenium.common.exceptions import NoSuchElementException,\
+  TimeoutException,\
+  WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+from println import println
 
 class Extractor():
  #------------------------------------------------------------------------
@@ -34,8 +37,10 @@ class Extractor():
       self._driver.get(start_url + f"&start={(self._page * 10)}")
       try:
         self.extract_page_content()
+      except WebDriverException as e:
+        println("Issue with selenium renderer most likely happened when taking screenshot", "warn")
       except TimeoutException as e:
-        print("Timeout error, check your internet")
+        println("Timeout error, check your internet", "warn")
 
       # Save extracted files into JSOn format after ever page is processed
       with open('extracted/' + str(self._page) + '.json', 'w') as outfile:
@@ -119,7 +124,7 @@ class Extractor():
             # We have to close the window and switch back to the search result
             self._driver.close()
             self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
-            print("This website has an issue and could not be parsed")
+            println(f"This website ({self._site_content['url']}) has an issue and could not be parsed", "warn")
 
  def extract_info_from_link(self):
     #------------------------------------------------------------------------
@@ -145,7 +150,7 @@ class Extractor():
       self._site_content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
         .get_attribute("content")
     except NoSuchElementException as e:
-      print("There is an issue with the social media pages")
+      println(f"Opps, we couldn't find a meta description for this website ({self._site_content['url']})", "warn")
 
     screen_shot_name = 'static/' + self._site_content["title"].replace("[,\.!\*- ]", "_") + '.png'
 
@@ -205,7 +210,7 @@ class Extractor():
     self._driver.find_element_by_tag_name('body').screenshot(file_name)
 
    except NoSuchElementException as e:
-    print("There is an issue with the social media pages")
+    println(f"We experienced an issue while trying to screenshot this website ({self._site_content['url']})", "warn")
 
 
  def extract_mobile_number(self, found_numbers):
