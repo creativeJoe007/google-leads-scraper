@@ -8,7 +8,7 @@ from println import println
 driver = None;
 arguments = argparse.ArgumentParser()
 
-arguments.add_argument('query', action='store', type=str)
+arguments.add_argument('query', action='store', type=str, help="This is your google query and should be written as a string")
 arguments.add_argument('--start', action='store', type=int, required=False, default=0, help="What page would you like to us\
    to start scrape from Google's search result")
 arguments.add_argument('--stop', action='store', type=int, required=False, default=14, help="At what page would you want to stop\
