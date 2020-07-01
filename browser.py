@@ -13,7 +13,7 @@ def determine_browser(preferred_browser="chrome", binary_path=""):
 
   try:
     if preferred_browser not in supported_browser:
-      return "This browser is supported by this library"
+      return "This browser is not supported by this library, "
     else:
       if preferred_browser == "chrome" or preferred_browser == "chromium":
         return start_chrome(preferred_browser, binary_path)
@@ -42,7 +42,7 @@ def start_chrome(_preferred_type, binary_path):
   options.add_argument("--force-device-scale-factor=1");
 
   # If binary path was passed
-  if binary_path: options.binary_location = binary_path;
+  if binary_path: options.binary_location=binary_path
 
   if _preferred_type == "chrome":
     return webdriver.Chrome(ChromeDriverManager().install(), options=options)
@@ -50,12 +50,11 @@ def start_chrome(_preferred_type, binary_path):
     return webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install(), options=options)
 
 def start_firefox(binary_path):
-  from webdriver_manager.firefox import GeckoDriverManager
+  from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
   from selenium.webdriver.firefox.options import Options
 
   options = Options();
   options.set_headless();
 
-  if binary_path: options.binary_location = binary_path;
-
-  return webdriver.Firefox(GeckoDriverManager().install(), options=options)
+  binary = FirefoxBinary(binary_path)
+  return webdriver.Firefox(firefox_binary=binary, options=options)
