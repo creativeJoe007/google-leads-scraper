@@ -1,6 +1,8 @@
 import json
 import re
 import time
+import csv
+from pathlib import Path
 from selenium.common.exceptions import NoSuchElementException,\
   TimeoutException,\
   WebDriverException
@@ -8,27 +10,38 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from println import println
 
+extracted_data_sample = {
+  'title': '',
+  'url': '',
+  'description': '',
+  'site_description': '',
+  'screen_shot': '',
+  'contact_email': '',
+  'contact_number': ''
+}
 class Extractor():
- #------------------------------------------------------------------------
- # This is where we extract all the data we need while scrapping
- # We take our screenshots here, get titles, find social media pages
- #  Of users we extract
- #------------------------------------------------------------------------
- def __init__(self, driver, query, start_page, stop_page):
-  self._driver = driver
-  self._data_extract = []
-  self._page = start_page # start counting from zero due to google's seek algorithm
-  self._stop_page = stop_page # start counting from zero due to google's seek algorithm
+  #------------------------------------------------------------------------
+  # This is where we extract all the data we need while scrapping
+  # We take our screenshots here, get titles, find social media pages
+  #  Of users we extract
+  #------------------------------------------------------------------------
+  def __init__(self, driver, query, start_page, stop_page, file_name):
+    self._driver = driver
+    self._data_extract = []
+    self._file_name = file_name
+    self._page = start_page # start counting from zero due to google's seek algorithm
+    self._stop_page = stop_page # start counting from zero due to google's seek algorithm
+    self._site_content = extracted_data_sample
 
-  # We loop through the enter data wrapped under pagination
-  self.paginate_page(query)
+    # We loop through the enter data wrapped under pagination
+    self.paginate_page(query)
 
- def paginate_page(self, query):
+  def paginate_page(self, query):
     #------------------------------------------------------------------------
     # We are going to fetch all first 10 pages
     # Of google's result
     #------------------------------------------------------------------------
-    start_url = f"https://www.google.com/search?q={query}&oq=&aqs=chrome.0.35i39l8.13736357j0j1&sourceid=chrome&ie=UTF-8"
+    start_url = f"https://www.google.com/search?q={query}&sourceid=chrome&ie=UTF-8"
     seek_number = 0
     seek_url_query = f"&start={seek_number}"
 
@@ -38,42 +51,34 @@ class Extractor():
       try:
         self.extract_page_content()
       except WebDriverException as e:
-        println("Issue with selenium renderer most likely happened when taking screenshot", "warn")
+        println(f"Selenium error: {str(e)}", "warn")
       except TimeoutException as e:
-        println("Timeout error, check your internet", "warn")
+        println(f"Timeout error: {str(e)}", "warn")
 
-      # Save extracted files into JSOn format after ever page is processed
-      with open('extracted/' + str(self._page) + '.json', 'w') as outfile:
-        json.dump(self._data_extract, outfile)
-        outfile.close()
+      # Save extracted files
+      self.write_to_file(self._site_content)
 
       self._page += 1
       self._data_extract = []
 
- def words_in_string(self, word_list, a_string):
+    println("Congratulations, scraping complete", "normal")
+
+  def words_in_string(self, word_list, a_string):
     return set(word_list).intersection(a_string.lower().split())
 
- def extract_page_content(self):
+  def extract_page_content(self):
     #------------------------------------------------------------------------
     # We are going to get all major links in a page
     # Match that they do not contain the words
     # "english", "translate" or "translation"
     # Any item that passes this page would be considered for scrapping
     #------------------------------------------------------------------------
-    dictionary_words = ["english", "translate", "translation", "dictionary", "Thesaurus", "translations"]
+    dictionary_words = ["english", "translate", "translation", "dictionary", "Thesaurus", "translations", "definition"]
     response = self._driver.find_elements_by_css_selector("div.g")
 
     # Now we look through all search results
     for result in response:
-      self._site_content = {
-        'title': '',
-        'url': '',
-        'description': '',
-        'site_description': '',
-        'screen_shot': '',
-        'contact_email': '',
-        'contact_number': ''
-      }
+      self._site_content = extracted_data_sample
 
       google_result = result.find_element_by_css_selector("div.rc")
 
@@ -94,7 +99,7 @@ class Extractor():
           # The data we need
           #------------------------------------------------------------------------
           if "youtube" in self._site_content['url']:
-            continue;
+            continue
           elif "facebook" in self._site_content['url']:
             #------------------------------------------------------------------------
             # First we split by "/"
@@ -114,10 +119,11 @@ class Extractor():
               else:
                 page_name = split_page_url_list[len(split_page_url_list) - 1]
             
-            self._site_content['url'] = f"https://web.facebook.com/pg/{page_name}/about/";
+            self._site_content['url'] = f"https://web.facebook.com/pg/{page_name}/about/"
 
           try:
             self.extract_info_from_link()
+            println(f"Finished Scrapping, {self._site_content['url']}", "normal")
           except NoSuchElementException as e:
             # Had cases where body element was empty, meaning the website didn't exist
             # So since a new window was launched before that error,
@@ -126,7 +132,7 @@ class Extractor():
             self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
             println(f"This website ({self._site_content['url']}) has an issue and could not be parsed", "warn")
 
- def extract_info_from_link(self):
+  def extract_info_from_link(self):
     #------------------------------------------------------------------------
     # We will access all the different websites, and
     # extract every email address, and phone number
@@ -134,25 +140,29 @@ class Extractor():
     #------------------------------------------------------------------------
 
     # Load up a new tab to handle this
-    self._driver.execute_script("window.open('');")
+    self._driver.execute_script("window.open('')")
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
     self._driver.get(self._site_content['url'])
+    println("----------------------------------------------", "bold")
+    println(f"Currently Scrapping, {self._site_content['url']}", "bold")
     time.sleep(5)
     
     html_source = self._driver.find_element_by_tag_name('body').get_attribute('innerHTML')
     extracted_numbers = ""
     extracted_emails = ""
 
-    # Now we use regex to match all occurrences of email or phone numbers in the page source
+    #------------------------------------------------------------------------
+    # Now we use regex to match all occurrences of email or phone numbers
+    # in the page source
+    #------------------------------------------------------------------------
     try:
-      # _content['inner_title'] = self._driver.find_element_by_tag_name('title').text
       self._site_content['site_description'] = self._driver.find_element_by_xpath("//meta[@name='description']")\
         .get_attribute("content")
     except NoSuchElementException as e:
       println(f"Opps, we couldn't find a meta description for this website ({self._site_content['url']})", "warn")
 
-    screen_shot_name = 'static/' + self._site_content["title"].replace("[,\.!\*- ]", "_") + '.png'
+    screen_shot_name = 'static/' + re.sub(r"[,\.!\*- ]", "", self._site_content["title"]) + '.png'
 
     found_numbers = self.scan_for_numbers(html_source)
     found_emails = self.scan_for_emails(html_source)
@@ -164,8 +174,8 @@ class Extractor():
     if len(verified_numbers) or len(found_emails):
       # Increase the size of the page for our screenshot
       self._driver.set_window_size(1920, 8000)
-      self.screengrab(screen_shot_name);
-      self._site_content['screen_shot'] = screen_shot_name;
+      self.screengrab(screen_shot_name)
+      self._site_content['screen_shot'] = screen_shot_name
 
       # We are done with processing now lets add to our list
       self._data_extract.append(self._site_content)
@@ -174,7 +184,7 @@ class Extractor():
     self._driver.close()
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
- def scan_for_numbers(self, source, index=0):
+  def scan_for_numbers(self, source, index=0) -> list:
     found_numbers = []
     phone_regex = [
       "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]", # Priority 1
@@ -186,34 +196,35 @@ class Extractor():
       is_found = re.findall(regex, source, re.IGNORECASE)
       if len(is_found) > 0:
         if type(is_found[0]) is tuple:
+          #------------------------------------------------------------------------
           # Our second regex returns a tuple instead of a string like the other one
           # I haven't figured how to resolve that but this is just a work around
+          #------------------------------------------------------------------------
           found_numbers = [is_found[0][0]]
         else: found_numbers = is_found
-        break;
+        break
     
     return found_numbers
 
- def scan_for_emails(self, source):
+  def scan_for_emails(self, source) -> list:
    extracted_email_addresses = []
    email_regex = "[a-zA-Z0-9.#$%&'*+=?^_`|~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*"
    emails_found = re.findall(email_regex, source, re.IGNORECASE)
 
    return emails_found
 
- def screengrab(self, file_name):
+  def screengrab(self, file_name):
    try:
     # Close every modal should any arise
     ActionChains(self._driver).send_keys(Keys.ESCAPE).perform()
 
-    # self._driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
     self._driver.find_element_by_tag_name('body').screenshot(file_name)
 
    except NoSuchElementException as e:
     println(f"We experienced an issue while trying to screenshot this website ({self._site_content['url']})", "warn")
 
 
- def extract_mobile_number(self, found_numbers):
+  def extract_mobile_number(self, found_numbers) -> list:
     number_list = []
     final_phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
     reg =  r"[\-\(\)\+ .]"
@@ -226,3 +237,24 @@ class Extractor():
           if(number not in number_list): number_list.append(number)
     
     return number_list
+
+  def write_to_file(self, data: dict):
+    #------------------------------------------------------------------------
+    # We check if the file already exist before we being, if the file
+    # Exist, we simply append the new data as the header for the CSV file has
+    # Already be created
+    # Else we add CSV header first before adding the data to file
+    #------------------------------------------------------------------------
+    save_file_to = "extracted/" + self._file_name + '.csv'
+    file_path_object = Path(save_file_to)
+    file_exist = file_path_object.is_file()
+    if file_exist is False:
+      Path(save_file_to).touch()
+
+    with open(save_file_to, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter='|')
+        # Add header only if the file doesn't exist
+        if file_exist is False: writer.writerow(data.keys())
+        # Add new data 
+        writer.writerow(data.values())
+        file.close()
