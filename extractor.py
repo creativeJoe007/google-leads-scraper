@@ -55,9 +55,6 @@ class Extractor():
       except TimeoutException as e:
         println(f"Timeout error: {str(e)}", "warn")
 
-      # Save extracted files
-      self.write_to_file(self._site_content)
-
       self._page += 1
       self._data_extract = []
 
@@ -178,7 +175,9 @@ class Extractor():
       self._site_content['screen_shot'] = screen_shot_name
 
       # We are done with processing now lets add to our list
-      self._data_extract.append(self._site_content)
+      # Save extracted files
+      self.write_to_file(self._site_content)
+      # self._data_extract.append(self._site_content)
 
     # Close new tab first
     self._driver.close()
@@ -245,13 +244,14 @@ class Extractor():
     # Already be created
     # Else we add CSV header first before adding the data to file
     #------------------------------------------------------------------------
-    save_file_to = "extracted/" + self._file_name + '.csv'
+    extracted_path = Path("extracted/")
+    save_file_to = extracted_path / f"{self._file_name}.csv"
     file_path_object = Path(save_file_to)
     file_exist = file_path_object.is_file()
     if file_exist is False:
       Path(save_file_to).touch()
 
-    with open(save_file_to, 'w', newline='') as file:
+    with open(save_file_to, 'a', newline='') as file:
         writer = csv.writer(file, delimiter='|')
         # Add header only if the file doesn't exist
         if file_exist is False: writer.writerow(data.keys())
