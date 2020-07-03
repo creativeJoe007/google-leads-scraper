@@ -5,7 +5,7 @@ import time
 from selenium import webdriver
 from println import println
 
-driver = None;
+driver = None
 arguments = argparse.ArgumentParser()
 
 arguments.add_argument('query', action='store', type=str, help="This is your google query and should be written as a string")
@@ -13,6 +13,7 @@ arguments.add_argument('--start', action='store', type=int, required=False, defa
    to start scrape from Google's search result")
 arguments.add_argument('--stop', action='store', type=int, required=False, default=14, help="At what page would you want to stop\
    scraping Google's search result")
+arguments.add_argument('--file', action='store', type=str, required=True, help="File name to save extracted data")
 arguments.add_argument('--browser', action='store', type=str, required=False, default="chrome", help="What browser should we\
    scrape with?")
 arguments.add_argument('--driver', action='store', type=str, required=False, help="Browser executable path")
@@ -25,19 +26,18 @@ def main():
   selected_browser = args.browser
   browser_driver_path = args.driver
   query = args.query
+  file_name = args.file
   start_page = args.start - 1
   stop_page = args.stop - 1
 
   if start_page < 0: start_page = 0 # If the user puts in 0, we auto make it one
   elif (stop_page - start_page) > 15:
     println("You cannot search more than 15 pages at a time")
-  # elif (stop_page - start_page) > 15:
-  #  print("You cannot be search more than 15 pages at a time")
 
  # Determine what browser to use for this tool
-  driver = determine_browser(selected_browser, browser_driver_path);
+  driver = determine_browser(selected_browser, browser_driver_path)
   if type(driver) == str:
-    println(driver);
+    println(driver)
   else:
     executor_url = driver.command_executor._url
     session_id = driver.session_id
@@ -46,9 +46,7 @@ def main():
     driver.set_window_size(1920, 8000)
 
     println(f"Google's Query: {query}", "normal")
-    extractor = Extractor(driver, query, start_page, stop_page)
-    println("Congratulations, scraping complete", "normal")
-    driver.close();
+    extractor = Extractor(driver, query, start_page, stop_page, file_name)
+    driver.close()
 
-# if len(arguments) < 2: println("You didn't enter your search query")
 main()
