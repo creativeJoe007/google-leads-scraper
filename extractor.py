@@ -162,7 +162,7 @@ class Extractor():
     except NoSuchElementException as e:
       println(f"Opps, we couldn't find a meta description for this website ({self._site_content['url']})", "warn")
 
-    screen_shot_name = 'static/' + re.sub(r"[,\.!\*- ]", "", self._site_content["title"]) + '.png'
+    screen_shot_name = 'static/' + re.sub(r"[\-\(\)\+ .*]", "", self._site_content["title"]) + '.png'
 
     found_numbers = self.scan_for_numbers(html_source)
     found_emails = self.scan_for_emails(html_source)
