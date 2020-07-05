@@ -27,7 +27,6 @@ class Extractor():
   #------------------------------------------------------------------------
   def __init__(self, driver, query, start_page, stop_page, file_name):
     self._driver = driver
-    self._data_extract = []
     self._file_name = file_name
     self._page = start_page # start counting from zero due to google's seek algorithm
     self._stop_page = stop_page # start counting from zero due to google's seek algorithm
@@ -164,20 +163,20 @@ class Extractor():
     found_numbers = self.scan_for_numbers(html_source)
     found_emails = self.scan_for_emails(html_source)
     verified_numbers = self.extract_mobile_number(found_numbers)
+    verified_emails = self.extract_real_email_address(found_emails)
 
     self._site_content['contact_number'] = verified_numbers
-    self._site_content['contact_email'] = found_emails
+    self._site_content['contact_email'] = verified_emails
     
-    if len(verified_numbers) or len(found_emails):
+    if len(verified_numbers) or len(verified_emails):
       # Increase the size of the page for our screenshot
-      self._driver.set_window_size(1920, 8000)
+      # self._driver.set_window_size(1920, 8000)
       self.screengrab(screen_shot_name)
       self._site_content['screen_shot'] = screen_shot_name
 
-      # We are done with processing now lets add to our list
+      # We are done with processing now lets add to our csv
       # Save extracted files
       self.write_to_file(self._site_content)
-      # self._data_extract.append(self._site_content)
 
     # Close new tab first
     self._driver.close()
@@ -207,7 +206,7 @@ class Extractor():
 
   def scan_for_emails(self, source) -> list:
    extracted_email_addresses = []
-   email_regex = "[a-zA-Z0-9.#$%&'*+=?^_`|~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*"
+   email_regex = "[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*"
    emails_found = re.findall(email_regex, source, re.IGNORECASE)
 
    return emails_found
@@ -226,16 +225,26 @@ class Extractor():
   def extract_mobile_number(self, found_numbers) -> list:
     number_list = []
     final_phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
-    reg =  r"[\-\(\)\+ .]"
+    strip_regex =  r"[\-\(\) .]"
     for number in found_numbers:
       number = re.search(final_phone_regex, number, re.IGNORECASE)
       if number:
-        number = number.group(0)
-        total_count = len(re.sub(reg, "", number))
+        number = re.sub(strip_regex, "", number.group(0))
+        total_count = len(number)
         if total_count > 9 and total_count < 14:
           if(number not in number_list): number_list.append(number)
-    
+
     return number_list
+
+  def extract_real_email_address(self, found_emails) -> list:
+    # Sometimes images take the form of an email address
+    email_list = []
+    check_against_strings = (".png", ".jpg", ".jpeg", ".mv", ".mp3", ".mp4", ".gif", ".webp")
+    for email in found_emails:
+      if email.endswith(check_against_strings) is False:
+        if(email not in email_list): email_list.append(email)
+
+    return email_list
 
   def write_to_file(self, data: dict):
     #------------------------------------------------------------------------
