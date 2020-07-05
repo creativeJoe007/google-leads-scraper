@@ -25,7 +25,7 @@ class Extractor():
   # We take our screenshots here, get titles, find social media pages
   #  Of users we extract
   #------------------------------------------------------------------------
-  def __init__(self, driver, query, start_page, stop_page, file_name):
+  def __init__(self, driver, query: str, start_page: int, stop_page: int, file_name: str):
     self._driver = driver
     self._file_name = file_name
     self._page = start_page # start counting from zero due to google's seek algorithm
@@ -140,7 +140,7 @@ class Extractor():
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
     self._driver.get(self._site_content['url'])
-    println("----------------------------------------------", "bold")
+    println("-----------------------------------------------------------------------------------------", "bold")
     println(f"Currently Scrapping, {self._site_content['url']}", "bold")
     time.sleep(5)
     
@@ -182,8 +182,8 @@ class Extractor():
     self._driver.close()
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
-  def scan_for_numbers(self, source, index=0) -> list:
-    found_numbers = []
+  def scan_for_numbers(self, source: str, index=0) -> list:
+    found_numbers: list = []
     phone_regex = [
       "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]", # Priority 1
       "((tel|p|t|phone|call|dial|ring)[: -]?[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9])", # Priority 2
@@ -204,14 +204,14 @@ class Extractor():
     
     return found_numbers
 
-  def scan_for_emails(self, source) -> list:
-   extracted_email_addresses = []
+  def scan_for_emails(self, source: str) -> list:
+   extracted_email_addresses: list = []
    email_regex = "[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*"
    emails_found = re.findall(email_regex, source, re.IGNORECASE)
 
    return emails_found
 
-  def screengrab(self, file_name):
+  def screengrab(self, file_name: str):
    try:
     # Close every modal should any arise
     ActionChains(self._driver).send_keys(Keys.ESCAPE).perform()
@@ -222,8 +222,8 @@ class Extractor():
     println(f"We experienced an issue while trying to screenshot this website ({self._site_content['url']})", "warn")
 
 
-  def extract_mobile_number(self, found_numbers) -> list:
-    number_list = []
+  def extract_mobile_number(self, found_numbers: list) -> list:
+    number_list: list = []
     final_phone_regex = "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]"
     strip_regex =  r"[\-\(\) .]"
     for number in found_numbers:
@@ -231,14 +231,14 @@ class Extractor():
       if number:
         number = re.sub(strip_regex, "", number.group(0))
         total_count = len(number)
-        if total_count > 9 and total_count < 14:
+        if total_count > 10 and total_count < 15:
           if(number not in number_list): number_list.append(number)
 
     return number_list
 
-  def extract_real_email_address(self, found_emails) -> list:
+  def extract_real_email_address(self, found_emails: list) -> list:
     # Sometimes images take the form of an email address
-    email_list = []
+    email_list: list = []
     check_against_strings = (".png", ".jpg", ".jpeg", ".mv", ".mp3", ".mp4", ".gif", ".webp")
     for email in found_emails:
       if email.endswith(check_against_strings) is False:
