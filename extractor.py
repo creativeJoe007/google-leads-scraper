@@ -2,9 +2,9 @@
 # Authur: creativeJoe007
 # Website: https://creativejoe007.com
 #----------------------------------------------------------------------------------------------------
-# A Google bot that allows anyone search for business using a keyword
+# A Google bot that allows anyone search for businesses using a keyword
 # We extract the website title, description, email (if any), mobile number (if any), web-link
-# A ideal bot for marketers looking to find leads/prospects
+# An ideal bot for marketers looking to find leads/prospects
 #----------------------------------------------------------------------------------------------------
 import json
 import re
