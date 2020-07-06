@@ -1,3 +1,11 @@
+#----------------------------------------------------------------------------------------------------
+# Authur: creativeJoe007
+# Website: https://creativejoe007.com
+#----------------------------------------------------------------------------------------------------
+# A Google bot that allows anyone search for business using a keyword
+# We extract the website title, description, email (if any), mobile number (if any), web-link
+# A ideal bot for marketers looking to find leads/prospects
+#----------------------------------------------------------------------------------------------------
 import json
 import re
 import time
@@ -182,7 +190,7 @@ class Extractor():
     self._driver.close()
     self._driver.switch_to.window(self._driver.window_handles[len(self._driver.window_handles) - 1])
 
-  def scan_for_numbers(self, source: str, index=0) -> list:
+  def scan_for_numbers(self, source: str) -> list:
     found_numbers: list = []
     phone_regex = [
       "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]", # Priority 1

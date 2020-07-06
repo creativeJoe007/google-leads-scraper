@@ -1,8 +1,14 @@
+#----------------------------------------------------------------------------------------------------
+# Authur: creativeJoe007
+# Website: https://creativejoe007.com
+#----------------------------------------------------------------------------------------------------
+# A Google bot that allows anyone search for business using a keyword
+# We extract the website title, description, email (if any), mobile number (if any), web-link
+# A ideal bot for marketers looking to find leads/prospects
+#----------------------------------------------------------------------------------------------------
 import argparse
 from browser import determine_browser
 from extractor import Extractor
-import time
-from selenium import webdriver
 from println import println
 
 driver = None
