@@ -86,13 +86,13 @@ class Extractor():
 
       google_result = result.find_element_by_css_selector("div.rc")
 
-      self._site_content['title'] = google_result.find_element_by_css_selector("div.r")\
-        .find_element_by_css_selector("h3.LC20lb.DKV0Md").text
+      self._site_content['title'] = google_result.find_elements_by_tag_name("div")[0]\
+        .find_element_by_css_selector("h3.LC20lb").find_element_by_tag_name("span").text
 
-      self._site_content['description'] = google_result.find_element_by_css_selector("div.s")\
-        .find_element_by_css_selector("span.st").text
+      self._site_content['description'] = google_result.find_element_by_css_selector("div.IsZvec")\
+        .find_element_by_tag_name("span").find_element_by_tag_name("span").text
 
-      self._site_content['url'] = google_result.find_element_by_css_selector("div.r")\
+      self._site_content['url'] = google_result.find_elements_by_tag_name("div")[0]\
         .find_element_by_tag_name("a").get_attribute("href")
 
       if(not self.words_in_string(dictionary_words, self._site_content['title']) and \
