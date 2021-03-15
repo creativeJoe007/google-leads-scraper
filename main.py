@@ -55,4 +55,7 @@ def main():
     extractor = Extractor(driver, query, start_page, stop_page, file_name)
     driver.close()
 
-main()
+try:
+   main()
+except Exception as e:
+   println("Oops, something's off here", "fail")
