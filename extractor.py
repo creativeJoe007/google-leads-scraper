@@ -91,7 +91,7 @@ class Extractor():
         # .find_element_by_css_selector("h3.LC20lb").find_element_by_tag_name("span").text
 
       self._site_content['description'] = google_result.find_element_by_css_selector("div.IsZvec")\
-        .find_element_by_tag_name("span.aCOpRe").find_element_by_tag_name("span").text
+        .find_element_by_tag_name("div").find_element_by_tag_name("span").text
         # .find_element_by_tag_name("span.aCOpRe").text
 
       self._site_content['url'] = google_result.find_elements_by_tag_name("div")[0]\
