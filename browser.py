@@ -7,7 +7,7 @@
 # An ideal bot for marketers looking to find leads/prospects
 #----------------------------------------------------------------------------------------------------
 from selenium import webdriver
-from webdriver_manager.utils import ChromeType
+from webdriver_manager.core.utils import ChromeType
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.common.exceptions import WebDriverException
 
@@ -33,7 +33,7 @@ def determine_browser(preferred_browser="chrome", binary_path=""):
 def start_chrome(_preferred_type, binary_path):
   from webdriver_manager.chrome import ChromeDriverManager
   from selenium.webdriver.chrome.options import Options
-  from webdriver_manager.utils import ChromeType
+  from webdriver_manager.core.utils import ChromeType
 
   options = Options()
   options.add_argument('--headless')
