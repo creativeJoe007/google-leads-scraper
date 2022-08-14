@@ -26,6 +26,7 @@ To start you would need to activate the virtual environment
 
 # Note:
 A screenshot of websites the scraper visits is taken and stored in the STATIC folder.
+Check the EXTRACTED folder to view content extracted by this tool (usually in csv format)
 
 
 
