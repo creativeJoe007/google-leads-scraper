@@ -7,7 +7,7 @@
 # An ideal bot for marketers looking to find leads/prospects
 #----------------------------------------------------------------------------------------------------
 from selenium import webdriver
-from webdriver_manager.utils import ChromeType
+from webdriver_manager.core.utils import ChromeType
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.common.exceptions import WebDriverException
 
@@ -33,16 +33,16 @@ def determine_browser(preferred_browser="chrome", binary_path=""):
 def start_chrome(_preferred_type, binary_path):
   from webdriver_manager.chrome import ChromeDriverManager
   from selenium.webdriver.chrome.options import Options
-  from webdriver_manager.utils import ChromeType
+  from webdriver_manager.core.utils import ChromeType
 
   options = Options()
   options.add_argument('--headless')
   options.add_argument('start-maximized')
   options.add_argument("enable-automation")
   options.add_argument("--disable-extensions")
-  options.add_argument("--window-size=1920,8000");
-  options.add_argument("enable-features=NetworkServiceInProcess");
-  options.add_argument("disable-features=NetworkService");
+  options.add_argument("--window-size=1920,8000")
+  options.add_argument("enable-features=NetworkServiceInProcess")
+  options.add_argument("disable-features=NetworkService")
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-infobars")
   options.add_argument("--disable-dev-shm-usage")

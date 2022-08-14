@@ -6,7 +6,6 @@
 # We extract the website title, description, email (if any), mobile number (if any), web-link
 # An ideal bot for marketers looking to find leads/prospects
 #----------------------------------------------------------------------------------------------------
-import json
 import re
 import time
 import csv
@@ -55,6 +54,7 @@ class Extractor():
     # while self._page <= 9:
     while self._page <= self._stop_page:
       self._driver.get(start_url + f"&start={(self._page * 10)}")
+      print(f"{start_url}&start={(self._page * 10)}")
       try:
         self.extract_page_content()
       except WebDriverException as e:
@@ -78,7 +78,7 @@ class Extractor():
     # Any item that passes this page would be considered for scrapping
     #------------------------------------------------------------------------
     dictionary_words = ["english", "translate", "translation", "dictionary", "Thesaurus", "translations", "definition"]
-    response = self._driver.find_elements_by_css_selector("div.g")
+    response = self._driver.find_elements_by_css_selector("div.MjjYud")
 
     # Now we look through all search results
     for result in response:
@@ -90,7 +90,7 @@ class Extractor():
         .find_element_by_css_selector("h3.LC20lb").text
         # .find_element_by_css_selector("h3.LC20lb").find_element_by_tag_name("span").text
 
-      self._site_content['description'] = google_result.find_element_by_css_selector("div.IsZvec")\
+      self._site_content['description'] = google_result.find_element_by_css_selector("div.Z26q7c")\
         .find_element_by_tag_name("div").find_element_by_tag_name("span").text
         # .find_element_by_tag_name("span.aCOpRe").text
 
@@ -172,7 +172,10 @@ class Extractor():
 
     found_numbers = self.scan_for_numbers(html_source)
     found_emails = self.scan_for_emails(html_source)
+
+    # Extract true mobile numbers
     verified_numbers = self.extract_mobile_number(found_numbers)
+    # Extract true email addresses
     verified_emails = self.extract_real_email_address(found_emails)
 
     self._site_content['contact_number'] = verified_numbers
@@ -195,6 +198,7 @@ class Extractor():
   def scan_for_numbers(self, source: str) -> list:
     found_numbers: list = []
     phone_regex = [
+      "^(((\+44\s?\d{4}|\(?0\d{4}\)?)\s?\d{3}\s?\d{3})|((\+44\s?\d{3}|\(?0\d{3}\)?)\s?\d{3}\s?\d{4})|((\+44\s?\d{2}|\(?0\d{2}\)?)\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$",
       "\+[\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]", # Priority 1
       "((tel|p|t|phone|call|dial|ring)[: -]?[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9])", # Priority 2
       # "[\+\(]?[0-9][0-9 .\-\(\)]{8,}[0-9]" # Priority 3
